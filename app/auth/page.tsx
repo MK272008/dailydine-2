@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   getSessionToken,
   linkPendingCredential,
@@ -251,171 +252,49 @@ export default function AuthPage() {
 
   return (
     <main className="page-shell">
-      <section className="hero-card auth-layout" aria-labelledby="auth-heading">
-        <div className="auth-intro">
-          <p className="eyebrow">VentureX for restaurants</p>
-          <h1 id="auth-heading">Run your restaurant with confidence.</h1>
-          <p className="muted">
-            Sign in to manage your menu, team, tables, and customer orders from one calm workspace.
-          </p>
-        </div>
-        {!authReady && <p className="muted">Checking authentication…</p>}
-        <div className="auth-grid">
-          <div className="panel">
-            <h2>Welcome back</h2>
-            <button type="button" onClick={handleGoogleSignIn} disabled={busy}>
-              Continue with Google
-            </button>
-            <div className="divider">or use your phone</div>
+      <section className={`hero-card auth-card ${user ? "setup-card" : ""}`} aria-labelledby="auth-heading">
+        <Link className="auth-brand" href="/">VentureX<span className="brand-dot">.</span></Link>
+        {!authReady && <p className="muted">Checking your session…</p>}
+        {!user ? (
+          <div className="auth-form-wrap">
+            <p className="eyebrow">Welcome back</p>
+            <h1 id="auth-heading">Sign in to your workspace.</h1>
+            <p className="muted">Manage your menu, team, and service from one calm place.</p>
+            <button type="button" onClick={handleGoogleSignIn} disabled={busy}>Continue with Google</button>
+            <div className="divider">or continue with phone</div>
             <form onSubmit={handlePhoneSubmit}>
-              <label>
-              Phone number
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(event) => setPhoneNumber(event.target.value)}
-                placeholder="+919876543210"
-                required
-                disabled={Boolean(confirmation)}
-              />
-              </label>
-              {confirmation && (
-              <label>
-                Verification code
-                <input inputMode="numeric" value={verificationCode} onChange={(event) => setVerificationCode(event.target.value)} required />
-              </label>
-              )}
+              <label>Phone number<input type="tel" value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} placeholder="+91 98765 43210" required disabled={Boolean(confirmation)} /></label>
+              {confirmation && <label>Verification code<input inputMode="numeric" value={verificationCode} onChange={(event) => setVerificationCode(event.target.value)} placeholder="6-digit code" required /></label>}
               <div id="recaptcha-container" />
-              <button type="submit" disabled={busy}>{confirmation ? "Verify code" : "Send code"}</button>
+              <button type="submit" disabled={busy}>{confirmation ? "Verify and sign in" : "Send verification code"}</button>
             </form>
+            <p className="form-note">Your account is protected by Firebase authentication.</p>
             {message && <p className="status" role="status">{message}</p>}
           </div>
-          <div className="panel">
-            <h2>Your account</h2>
-            <p className="muted">Use Google or phone OTP. You can securely link both methods after signing in.</p>
-            <button type="button" onClick={handleTokenCheck}>Check current session</button>
-          </div>
-        </div>
-        {user && (
-          <div className="panel stack">
-            <p className="success">Signed in as {user.email ?? user.phoneNumber}</p>
-            <button type="button" onClick={handleLinkGoogle}>
-              Link Google account
-            </button>
-            <form onSubmit={handlePhoneLink}>
-              <h2>Link phone number</h2>
-              <input
-                type="tel"
-                value={phoneLinkNumber}
-                onChange={(event) => setPhoneLinkNumber(event.target.value)}
-                placeholder="+919876543210"
-                required
-                disabled={Boolean(phoneLinkConfirmation)}
-              />
-              {phoneLinkConfirmation && (
-                <input
-                  inputMode="numeric"
-                  value={phoneLinkCode}
-                  onChange={(event) => setPhoneLinkCode(event.target.value)}
-                  placeholder="Verification code"
-                  required
-                />
-              )}
-              <div id="phone-link-recaptcha" />
-              <button type="submit">
-                {phoneLinkConfirmation ? "Verify phone link" : "Send link code"}
-              </button>
-            </form>
-            {linkingGoogle && (
-              <button type="button" onClick={handleLinkPendingGoogle}>
-                Finish linking Google
-              </button>
-            )}
-            <button type="button" onClick={handleSignOut}>
-              Sign out
-            </button>
-            <form onSubmit={saveProfile}>
-              <h2>Complete your profile</h2>
-              <label>
-                Display name
-                <input
-                  value={displayName}
-                  onChange={(event) => setDisplayName(event.target.value)}
-                  required
-                />
-              </label>
-              <label>
-                Account type
-                <select
-                  value={role}
-                  onChange={(event) =>
-                    setRole(event.target.value as "OWNER" | "EMPLOYEE")
-                  }
-                >
-                  <option value="OWNER">Owner</option>
-                  <option value="EMPLOYEE">Employee</option>
-                </select>
-              </label>
+        ) : (
+          <div className="setup-layout">
+            <div className="setup-heading">
+              <div><p className="eyebrow">Welcome to VentureX</p><h1 id="auth-heading">Set up your restaurant.</h1><p className="muted">A few details now, a clearer service later.</p></div>
+              <span className="setup-step">Step 1 of 1</span>
+            </div>
+            <div className="setup-account"><span className="account-avatar">{(displayName || user.email || "U").slice(0, 1).toUpperCase()}</span><div><strong>{user.email ?? user.phoneNumber}</strong><span>Account verified</span></div><button className="button-secondary" type="button" onClick={handleSignOut}>Sign out</button></div>
+            <form className="restaurant-form" onSubmit={saveProfile}>
+              <div className="form-section-title"><span>01</span><div><h2>Your profile</h2><p className="muted">Tell us who is running the show.</p></div></div>
+              <label>Display name<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Aanya Mehta" required /></label>
+              <label>Account type<select value={role} onChange={(event) => setRole(event.target.value as "OWNER" | "EMPLOYEE")}><option value="OWNER">Restaurant owner</option><option value="EMPLOYEE">Team member</option></select></label>
               <button type="submit">Save profile</button>
             </form>
-            {role === "OWNER" && (
-              <form onSubmit={createRestaurant}>
-                <h2>Create a restaurant</h2>
-                <label>
-                  Restaurant name
-                  <input
-                    value={restaurantName}
-                    onChange={(event) => setRestaurantName(event.target.value)}
-                    required
-                  />
-                </label>
-                <label>
-                  Address
-                  <input
-                    value={restaurantAddress}
-                    onChange={(event) => setRestaurantAddress(event.target.value)}
-                    required
-                  />
-                </label>
-                <label>
-                  Tables
-                  <input
-                    type="number"
-                    min="1"
-                    value={tableCount}
-                    onChange={(event) => setTableCount(event.target.value)}
-                    required
-                  />
-                </label>
-                <label>
-                  Tax percentage
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={taxPercent}
-                    onChange={(event) => setTaxPercent(event.target.value)}
-                    required
-                  />
-                </label>
-                <button type="submit">Create restaurant</button>
-              </form>
-            )}
-            {restaurants.length > 0 && (
-              <div>
-                <h2>Your restaurants</h2>
-                {restaurants.map((restaurant) => (
-                  <button
-                    key={restaurant.id}
-                    type="button"
-                    onClick={() => selectRestaurant(restaurant.id)}
-                  >
-                    {restaurant.name}
-                  </button>
-                ))}
-              </div>
-            )}
+            {role === "OWNER" && <form className="restaurant-form setup-section" onSubmit={createRestaurant}>
+              <div className="form-section-title"><span>02</span><div><h2>Add your restaurant</h2><p className="muted">You can change these details anytime.</p></div></div>
+              <label>Restaurant name<input value={restaurantName} onChange={(event) => setRestaurantName(event.target.value)} placeholder="The Green Table" required /></label>
+              <label>Address<input value={restaurantAddress} onChange={(event) => setRestaurantAddress(event.target.value)} placeholder="12 Market Street, Bengaluru" required /></label>
+              <div className="form-grid"><label>Number of tables<input type="number" min="1" value={tableCount} onChange={(event) => setTableCount(event.target.value)} required /></label><label>Tax rate<input type="number" min="0" max="100" step="0.01" value={taxPercent} onChange={(event) => setTaxPercent(event.target.value)} required /></label></div>
+              <button type="submit">Create restaurant</button>
+            </form>}
+            {restaurants.length > 0 && <div className="setup-section existing-restaurants"><div className="form-section-title"><span>03</span><div><h2>Your restaurants</h2><p className="muted">Choose where you want to work.</p></div></div>{restaurants.map((restaurant) => <button className="restaurant-choice" key={restaurant.id} type="button" onClick={() => selectRestaurant(restaurant.id)}><span>{restaurant.name}<small>{restaurant.address}</small></span><span aria-hidden="true">→</span></button>)}</div>}
+            <div className="setup-footer"><button className="button-secondary" type="button" onClick={handleTokenCheck}>Check session</button><Link className="button-link" href="/dashboard">Open dashboard →</Link></div>
+            <details className="account-options"><summary>Account security options</summary><div className="account-options-body"><button className="button-secondary" type="button" onClick={handleLinkGoogle}>Link Google account</button><form onSubmit={handlePhoneLink}><label>Link a phone number<input type="tel" value={phoneLinkNumber} onChange={(event) => setPhoneLinkNumber(event.target.value)} placeholder="+91 98765 43210" required disabled={Boolean(phoneLinkConfirmation)} /></label>{phoneLinkConfirmation && <input inputMode="numeric" value={phoneLinkCode} onChange={(event) => setPhoneLinkCode(event.target.value)} placeholder="Verification code" required />}<div id="phone-link-recaptcha" /><button type="submit">{phoneLinkConfirmation ? "Verify phone link" : "Send link code"}</button></form>{linkingGoogle && <button type="button" onClick={handleLinkPendingGoogle}>Finish linking Google</button>}</div></details>
+            {message && <p className="status" role="status">{message}</p>}
           </div>
         )}
       </section>
