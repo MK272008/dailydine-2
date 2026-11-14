@@ -72,10 +72,17 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     await getAdminDb().doc(`restaurants/${restaurantId}`).set(
       {
-        name: input.name ?? current?.name,
-        address: input.address ?? current?.address,
+        name: input.name?.trim() ?? current?.name,
+        address: input.address?.trim() ?? current?.address,
         tableCount: input.tableCount ?? current?.tableCount,
         taxPercent: input.taxPercent ?? current?.taxPercent,
+        ...(input.fulfillmentSettings
+          ? { fulfillmentSettings: input.fulfillmentSettings }
+          : {}),
+        ...(input.activePreorderWindows
+          ? { activePreorderWindows: input.activePreorderWindows }
+          : {}),
+        ...(input.discountRules ? { discountRules: input.discountRules } : {}),
         updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },

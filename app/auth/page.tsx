@@ -251,48 +251,54 @@ export default function AuthPage() {
 
   return (
     <main className="page-shell">
-      <section className="hero-card" aria-labelledby="auth-heading">
-        <p className="eyebrow">VentureX account</p>
-        <h1 id="auth-heading">Sign in to continue.</h1>
+      <section className="hero-card auth-layout" aria-labelledby="auth-heading">
+        <div className="auth-intro">
+          <p className="eyebrow">VentureX for restaurants</p>
+          <h1 id="auth-heading">Run your restaurant with confidence.</h1>
+          <p className="muted">
+            Sign in to manage your menu, team, tables, and customer orders from one calm workspace.
+          </p>
+        </div>
         {!authReady && <p className="muted">Checking authentication…</p>}
-        <button type="button" onClick={handleGoogleSignIn} disabled={busy}>
-          Continue with Google
-        </button>
-        <div className="divider">or</div>
-        <form onSubmit={handlePhoneSubmit}>
-          <label>
-            Phone number
-            <input
-              type="tel"
-              value={phoneNumber}
-              onChange={(event) => setPhoneNumber(event.target.value)}
-              placeholder="+919876543210"
-              required
-              disabled={Boolean(confirmation)}
-            />
-          </label>
-          {confirmation && (
-            <label>
-              Verification code
+        <div className="auth-grid">
+          <div className="panel">
+            <h2>Welcome back</h2>
+            <button type="button" onClick={handleGoogleSignIn} disabled={busy}>
+              Continue with Google
+            </button>
+            <div className="divider">or use your phone</div>
+            <form onSubmit={handlePhoneSubmit}>
+              <label>
+              Phone number
               <input
-                inputMode="numeric"
-                value={verificationCode}
-                onChange={(event) => setVerificationCode(event.target.value)}
+                type="tel"
+                value={phoneNumber}
+                onChange={(event) => setPhoneNumber(event.target.value)}
+                placeholder="+919876543210"
                 required
+                disabled={Boolean(confirmation)}
               />
-            </label>
-          )}
-          <div id="recaptcha-container" />
-          <button type="submit" disabled={busy}>
-            {confirmation ? "Verify code" : "Send code"}
-          </button>
-        </form>
-        <button type="button" onClick={handleTokenCheck}>
-          Check current session
-        </button>
+              </label>
+              {confirmation && (
+              <label>
+                Verification code
+                <input inputMode="numeric" value={verificationCode} onChange={(event) => setVerificationCode(event.target.value)} required />
+              </label>
+              )}
+              <div id="recaptcha-container" />
+              <button type="submit" disabled={busy}>{confirmation ? "Verify code" : "Send code"}</button>
+            </form>
+            {message && <p className="status" role="status">{message}</p>}
+          </div>
+          <div className="panel">
+            <h2>Your account</h2>
+            <p className="muted">Use Google or phone OTP. You can securely link both methods after signing in.</p>
+            <button type="button" onClick={handleTokenCheck}>Check current session</button>
+          </div>
+        </div>
         {user && (
-          <>
-            <p className="muted">Signed in as {user.email ?? user.phoneNumber}</p>
+          <div className="panel stack">
+            <p className="success">Signed in as {user.email ?? user.phoneNumber}</p>
             <button type="button" onClick={handleLinkGoogle}>
               Link Google account
             </button>
@@ -410,9 +416,8 @@ export default function AuthPage() {
                 ))}
               </div>
             )}
-          </>
+          </div>
         )}
-        {message && <p className="muted">{message}</p>}
       </section>
     </main>
   );
