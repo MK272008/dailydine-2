@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "707163108747",
+    "project_id": "daily-dine-f511e",
+    "storage_bucket": "daily-dine-f511e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:707163108747:android:19ec57d9711ee1ce942b8e",
+        "android_client_info": {
+          "package_name": "com.venturex.owner"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "707163108747-lbpbi8qn6moeqttsdd9ltibdl04cbmhj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.venturex.owner",
+            "certificate_hash": "c045418c70cf34d16dd1a89270bd811a557935d1"
+          }
+        },
+        {
+          "client_id": "707163108747-qtck0s77hfqavla9bgk5kol870o72f6p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZTz9nj7Y6yA4C0lbwV8GZs8pAB3PGu6I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "707163108747-qtck0s77hfqavla9bgk5kol870o72f6p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

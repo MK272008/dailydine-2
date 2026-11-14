@@ -1,0 +1,99 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDocument() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isOwner(restaurantId) {
+      return signedIn() &&
+        get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.ownerId ==
+          request.auth.uid;
+    }
+
+    function membership(restaurantId) {
+      return get(/databases/$(database)/documents/restaurants/$(restaurantId)/members/$(request.auth.uid));
+    }
+
+    function isActiveMember(restaurantId) {
+      return signedIn() && membership(restaurantId).data.status == "ACTIVE";
+    }
+
+    function hasPermission(restaurantId, permission) {
+      return isOwner(restaurantId) ||
+        (isActiveMember(restaurantId) &&
+          permission in membership(restaurantId).data.permissions);
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow update: if signedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    match /restaurants/{restaurantId} {
+      allow read: if isOwner(restaurantId) || isActiveMember(restaurantId);
+      allow create: if signedIn() &&
+        request.resource.data.ownerId == request.auth.uid;
+      allow update: if hasPermission(restaurantId, "restaurant:write");
+      allow delete: if isOwner(restaurantId);
+
+      match /members/{userId} {
+        allow read: if hasPermission(restaurantId, "members:read") ||
+          (signedIn() && request.auth.uid == userId);
+        allow create: if signedIn() && request.auth.uid == userId &&
+          request.resource.data.status == "PENDING";
+        allow update: if hasPermission(restaurantId, "members:write");
+        allow delete: if false;
+      }
+
+      match /menuCategories/{categoryId} {
+        allow read: if isOwner(restaurantId) || isActiveMember(restaurantId);
+        allow write: if hasPermission(restaurantId, "menu:write");
+      }
+
+      match /menuItems/{itemId} {
+        allow read: if isOwner(restaurantId) || isActiveMember(restaurantId);
+        allow write: if hasPermission(restaurantId, "menu:write");
+      }
+
+      match /employeeInvites/{inviteId} {
+        allow read, write: if hasPermission(restaurantId, "members:write");
+      }
+    }
+
+    match /tableSessions/{sessionId} {
+      allow read, update: if isActiveMember(resource.data.restaurantId);
+      allow create: if signedIn();
+      allow delete: if false;
+    }
+
+    match /orders/{orderId} {
+      allow read: if signedIn() &&
+        (isActiveMember(resource.data.restaurantId) ||
+          resource.data.customerId == request.auth.uid);
+      allow create: if signedIn() &&
+        request.resource.data.customerId == request.auth.uid;
+      allow update: if isActiveMember(resource.data.restaurantId);
+      allow delete: if false;
+    }
+
+    match /paymentLedger/{paymentId} {
+      allow read: if hasPermission(resource.data.restaurantId, "finance:read");
+      allow write: if false;
+    }
+
+    match /auditLogs/{auditId} {
+      allow read: if hasPermission(resource.data.restaurantId, "audit:read");
+      allow write: if false;
+    }
+  }
+}

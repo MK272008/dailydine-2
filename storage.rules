@@ -1,0 +1,44 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function restaurant(restaurantId) {
+      return firestore.get(
+        /databases/(default)/documents/restaurants/$(restaurantId)
+      );
+    }
+
+    function isOwner(restaurantId) {
+      return signedIn() && restaurant(restaurantId).data.ownerId == request.auth.uid;
+    }
+
+    function canManageMenu(restaurantId) {
+      return isOwner(restaurantId) ||
+        (
+          signedIn() &&
+          firestore.get(
+            /databases/(default)/documents/restaurants/$(restaurantId)/members/$(request.auth.uid)
+          ).data.status == "ACTIVE" &&
+          "menu:write" in firestore.get(
+            /databases/(default)/documents/restaurants/$(restaurantId)/members/$(request.auth.uid)
+          ).data.permissions
+        );
+    }
+
+    match /restaurants/{restaurantId}/menu/{fileName} {
+      allow read: if true;
+      allow write: if canManageMenu(restaurantId) &&
+        request.resource.size < 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+      allow delete: if canManageMenu(restaurantId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
